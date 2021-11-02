@@ -1,4 +1,6 @@
 import tkinter as tk
+import time
+from collections import deque
 
 
 # Setup window
@@ -31,11 +33,12 @@ class Node:
         self.neighbors = []
 
 
-# Initialize adjacency list
+# Set nodes in grid
 # (x-coordinate, y-coordinate, state) with state = barrier, start, end, currently visited...
 grid = [[Node(x, y, "neutral") for x in range(0, CANVAS_WIDTH, TILE_SIZE)] for y in range(0, CANVAS_HEIGHT, TILE_SIZE)]
 
 
+# Set neighbors of nodes
 def set_neighbors(grid):
     for i in range(len(grid)):
         for j in range(len(grid[i])):
@@ -82,10 +85,50 @@ def draw_grid():
         canvas.create_line(x, 0, x, CANVAS_HEIGHT)
             
 
-draw_start_end()
-draw_spots()
+# draw_start_end()
+# draw_spots()
 draw_grid()
 
+# Create adjacency list that can be used by pathfinding algorithms
+def get_adjacency_list(grid):
+    adjacency_list = {}
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            node_key = (grid[i][j].x, grid[i][j].y)
+            neighbor_list = []
+            for neighbor in grid[i][j].neighbors:
+                neighbor_list.append((neighbor.x, neighbor.y))
+            adjacency_list[node_key] = neighbor_list
+    return adjacency_list
+
+adjacency_list = get_adjacency_list(grid)
+# for node, neighbors in adjacency_list.items():
+#     print(str(node) + " : " + str(neighbors))
+
+def breadth_first_shortest_path(adjacency_list, start, end):
+    visited = set([start])
+    queue = deque([[start]]) # [node, distance_from_start]
+    canvas.create_rectangle(start[0], start[1], start[0] + TILE_SIZE, start[1] + TILE_SIZE, fill="green")
+    canvas.create_rectangle(end[0], end[1], end[0] + TILE_SIZE, end[1] + TILE_SIZE, fill="red")
+    # canvas.update()
+    while len(queue) > 0:
+        [node] = queue.popleft()
+        # print(node)
+        # print(visited)
+        if node == end: return
+        for neighbor in adjacency_list[node]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append([neighbor])
+                if neighbor == end: return
+                canvas.create_rectangle(neighbor[0], neighbor[1], neighbor[0] + TILE_SIZE, neighbor[1] + TILE_SIZE, fill="orange")
+                time.sleep(0.01)
+                canvas.update()
+
+
+breadth_first_shortest_path(adjacency_list, (280, 80), (660, 200))
+
+# breadth_first_shortest_path(adjacency_list, 0, 2)
 
 root.bind("<B1-Motion>", draw_barrier)
 root.bind("<Button-1>", draw_barrier)
