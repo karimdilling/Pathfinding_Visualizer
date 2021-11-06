@@ -146,7 +146,7 @@ def breadth_first_shortest_path(adjacency_list, start, end):
                 canvas.update()
             return
         for neighbor in adjacency_list[node]:
-            if neighbor not in visited:
+            if neighbor not in visited and neighbor not in barrier_set:
                 predecessors[neighbor] = node
                 visited.add(neighbor)
                 queue.append([neighbor])
