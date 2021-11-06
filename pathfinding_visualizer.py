@@ -32,6 +32,7 @@ def draw_barrier(e):
     if (x, y) not in barrier_set:
         barrier_set.add((x, y))
         canvas.create_rectangle(x, y, x+TILE_SIZE, y+TILE_SIZE, fill="black")
+        # print(barrier_set)
 
 def remove_barrier(e):
     x = e.x
@@ -42,6 +43,11 @@ def remove_barrier(e):
     if (x, y) in barrier_set:
         barrier_set.remove((x, y))
         canvas.create_rectangle(x, y, x+TILE_SIZE, y+TILE_SIZE, fill="white")
+        # print(barrier_set)
+
+
+def is_inbounds(x, y):
+    return x >= 0 and x <= (CANVAS_WIDTH - TILE_SIZE)  and y >= 0 and y <= (CANVAS_HEIGHT - TILE_SIZE) 
 
 
 class Node:
@@ -86,6 +92,23 @@ def set_neighbors(grid):
 
 set_neighbors(grid)
 
+border_set = set()
+
+# Draw border around window frame
+def draw_border():
+    global border_set
+    for x in range(0, CANVAS_WIDTH, TILE_SIZE):
+        border_set.add((x, 0))
+        border_set.add((x, CANVAS_HEIGHT - TILE_SIZE))
+        canvas.create_rectangle(x, 0, x + TILE_SIZE, TILE_SIZE, fill="black")
+        canvas.create_rectangle(x, CANVAS_HEIGHT - TILE_SIZE, x + TILE_SIZE, CANVAS_HEIGHT, fill="black")
+    for y in range(0, CANVAS_HEIGHT, TILE_SIZE):
+        border_set.add((0, y))
+        border_set.add((CANVAS_WIDTH - TILE_SIZE, y))
+        canvas.create_rectangle(0, y, TILE_SIZE, y + TILE_SIZE, fill="black")
+        canvas.create_rectangle(CANVAS_WIDTH - TILE_SIZE, y, CANVAS_WIDTH, y + TILE_SIZE, fill="black")
+
+draw_border()
 
 def draw_start_end():
     canvas.create_rectangle(5*TILE_SIZE, 5*TILE_SIZE, 5*TILE_SIZE+TILE_SIZE, 5*TILE_SIZE+TILE_SIZE, fill="green")   # Start point
@@ -124,6 +147,7 @@ adjacency_list = get_adjacency_list(grid)
 # for node, neighbors in adjacency_list.items():
 #     print(str(node) + " : " + str(neighbors))
 
+
 def breadth_first_shortest_path(adjacency_list, start, end):
     visited = set([start])
     queue = deque([[start]])
@@ -146,7 +170,7 @@ def breadth_first_shortest_path(adjacency_list, start, end):
                 canvas.update()
             return
         for neighbor in adjacency_list[node]:
-            if neighbor not in visited and neighbor not in barrier_set:
+            if neighbor not in visited and neighbor not in barrier_set and neighbor not in border_set:
                 predecessors[neighbor] = node
                 visited.add(neighbor)
                 queue.append([neighbor])
