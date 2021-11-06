@@ -9,20 +9,39 @@ root.title("Pathfinding Visualizer")
 root.geometry("1000x600")
 root.resizable(False, False)
 CANVAS_WIDTH = 1000
-CANVAS_HEIGHT = 600
+CANVAS_HEIGHT = 500
 TILE_SIZE = 20 # Tile size of the grid
 
 # Configure canvas
 canvas = tk.Canvas(root, bg="white", width=CANVAS_WIDTH, height=CANVAS_HEIGHT)
-canvas.pack()
+canvas.grid(row=0, column=0)
 
+# Put buttons in place
+start_algorithm_btn = tk.Button(root, text="Start Algorithm", command=lambda: breadth_first_shortest_path(adjacency_list, (280, 80), (660, 160)))
+start_algorithm_btn.grid(row=1,column=0)
+
+
+barrier_set = set()
 
 def draw_barrier(e):
     x = e.x
     y = e.y
     x = (x // TILE_SIZE) * TILE_SIZE
     y = (y // TILE_SIZE) * TILE_SIZE
-    canvas.create_rectangle(x, y, x+TILE_SIZE, y+TILE_SIZE, fill="black")
+    global barrier_set
+    if (x, y) not in barrier_set:
+        barrier_set.add((x, y))
+        canvas.create_rectangle(x, y, x+TILE_SIZE, y+TILE_SIZE, fill="black")
+
+def remove_barrier(e):
+    x = e.x
+    y = e.y
+    x = (x // TILE_SIZE) * TILE_SIZE
+    y = (y // TILE_SIZE) * TILE_SIZE
+    global barrier_set
+    if (x, y) in barrier_set:
+        barrier_set.remove((x, y))
+        canvas.create_rectangle(x, y, x+TILE_SIZE, y+TILE_SIZE, fill="white")
 
 
 class Node:
@@ -114,7 +133,7 @@ def breadth_first_shortest_path(adjacency_list, start, end):
     canvas.create_rectangle(end[0], end[1], end[0] + TILE_SIZE, end[1] + TILE_SIZE, fill="red")
     while len(queue) > 0:
         [node] = queue.popleft()
-        if node == end: 
+        if node == end:
             while node in predecessors:
                 node = predecessors[node]
                 if node != end and node != start:
@@ -137,9 +156,8 @@ def breadth_first_shortest_path(adjacency_list, start, end):
             canvas.update()
 
 
-breadth_first_shortest_path(adjacency_list, (280, 80), (660, 160))
-
-
-root.bind("<B1-Motion>", draw_barrier)
-root.bind("<Button-1>", draw_barrier)
+canvas.bind("<B1-Motion>", draw_barrier)
+canvas.bind("<Button-1>", draw_barrier)
+canvas.bind("<B3-Motion>", remove_barrier)
+canvas.bind("<Button-3>", remove_barrier)
 root.mainloop()
