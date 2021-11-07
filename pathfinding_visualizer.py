@@ -11,14 +11,33 @@ root.resizable(False, False)
 CANVAS_WIDTH = 1000
 CANVAS_HEIGHT = 500
 TILE_SIZE = 20 # Tile size of the grid
+start = (280, 80)
+end = (660, 160)
 
 # Configure canvas
 canvas = tk.Canvas(root, bg="white", width=CANVAS_WIDTH, height=CANVAS_HEIGHT)
-canvas.grid(row=0, column=0)
+canvas.pack(side=tk.TOP)
 
 # Put buttons in place
-start_algorithm_btn = tk.Button(root, text="Start Algorithm", command=lambda: breadth_first_shortest_path(adjacency_list, (280, 80), (660, 160)))
-start_algorithm_btn.grid(row=1,column=0)
+options = ["Breadth-First-Pathfinding", "Depth-First-Pathfinding"]
+variable = tk.StringVar()
+variable.set(options[0])
+choose_algorithm_menu = tk.OptionMenu(root, variable, *options)
+choose_algorithm_menu.pack(side=tk.LEFT, padx= 10)
+
+# Detects which algorithm was selected
+def get_algorithm():
+    if variable.get() == options[0]:
+        breadth_first_shortest_path(adjacency_list, start, end)
+    elif variable.get() == options[1]:
+        depth_first_algorithm(adjacency_list, start, end)
+
+start_algorithm_btn = tk.Button(root, text="Start Algorithm", command=get_algorithm)
+start_algorithm_btn.pack(side=tk.LEFT, padx=10)
+
+# Create start and end point
+canvas.create_rectangle(start[0], start[1], start[0] + TILE_SIZE, start[1] + TILE_SIZE, fill="green")
+canvas.create_rectangle(end[0], end[1], end[0] + TILE_SIZE, end[1] + TILE_SIZE, fill="red")
 
 
 barrier_set = set()
@@ -178,6 +197,37 @@ def breadth_first_shortest_path(adjacency_list, start, end):
             canvas.create_rectangle(node[0], node[1], node[0] + TILE_SIZE, node[1] + TILE_SIZE, fill="orange")
             time.sleep(0.01)
             canvas.update()
+
+
+def depth_first_algorithm(adjacency_list, start, end):
+    visited = set()
+    stack = [start]
+    predecessors = {}
+    path = deque()
+    while len(stack) > 0:
+        current = stack.pop()
+        if current != start:
+            visited.add(current)
+        if current == end: 
+            while current in predecessors:
+                current = predecessors[current]
+                if current != end and current != start:
+                    path.appendleft(current)
+                if current == start:
+                    break
+            for current in path:
+                canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="yellow")
+                time.sleep(0.01)
+                canvas.update()
+            return
+        if current != start:
+            canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="orange")
+            time.sleep(0.01)
+            canvas.update()
+        for neighbor in adjacency_list[current]:
+            if neighbor not in visited and neighbor not in barrier_set and neighbor not in border_set:
+                predecessors[neighbor] = current
+                stack.append(neighbor)
 
 
 canvas.bind("<B1-Motion>", draw_barrier)
