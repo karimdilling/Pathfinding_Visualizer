@@ -1,6 +1,8 @@
 import tkinter as tk
 import time
+import sys
 from collections import deque
+from queue import PriorityQueue
 
 
 # Setup window
@@ -19,7 +21,7 @@ canvas = tk.Canvas(root, bg="white", width=CANVAS_WIDTH, height=CANVAS_HEIGHT)
 canvas.pack(side=tk.TOP)
 
 # Put buttons in place
-options = ["Breadth-First-Pathfinding", "Depth-First-Pathfinding"]
+options = ["Breadth-First-Pathfinding", "Depth-First-Pathfinding", "Dijkstra-Pathfinding"]
 variable = tk.StringVar()
 variable.set(options[0])
 choose_algorithm_menu = tk.OptionMenu(root, variable, *options)
@@ -31,6 +33,8 @@ def get_algorithm():
         breadth_first_shortest_path(adjacency_list, start, end)
     elif variable.get() == options[1]:
         depth_first_algorithm(adjacency_list, start, end)
+    elif variable.get() == options[2]:
+        dijkstra_shortest_path(adjacency_list_weighted, start, end)
 
 start_algorithm_btn = tk.Button(root, text="Start Algorithm", command=get_algorithm)
 start_algorithm_btn.pack(side=tk.LEFT, padx=10)
@@ -70,16 +74,17 @@ def is_inbounds(x, y):
 
 
 class Node:
-    def __init__(self, x, y, state) -> None:
+    def __init__(self, x, y, state, weight) -> None:
         self.x = x
         self.y = y
         self.state = state # barrier, unvisited, currently visited, start/end...
+        self.weight = weight
         self.neighbors = []
 
 
 # Set nodes in grid
 # (x-coordinate, y-coordinate, state) with state = barrier, start, end, currently visited...
-grid = [[Node(x, y, "neutral") for x in range(0, CANVAS_WIDTH, TILE_SIZE)] for y in range(0, CANVAS_HEIGHT, TILE_SIZE)]
+grid = [[Node(x, y, "neutral", 1) for x in range(0, CANVAS_WIDTH, TILE_SIZE)] for y in range(0, CANVAS_HEIGHT, TILE_SIZE)]
 
 
 # Set neighbors of nodes
@@ -228,6 +233,58 @@ def depth_first_algorithm(adjacency_list, start, end):
             if neighbor not in visited and neighbor not in barrier_set and neighbor not in border_set:
                 predecessors[neighbor] = current
                 stack.append(neighbor)
+
+
+# Creates weighted adjacency list for Dijkstra and A* algorithm (weighted pathfinding algorithms)
+def create_weighted_adjacency_list(adjacency_list):
+    adjacency_list_weighted = {}
+    for node, neighbors in adjacency_list.items():
+        adjacency_list_weighted[node] = dict()
+        for neighbor in neighbors:
+            adjacency_list_weighted[node][neighbor] = 1 # adjust node weight here
+    print(adjacency_list_weighted)
+    return adjacency_list_weighted
+
+adjacency_list_weighted = create_weighted_adjacency_list(adjacency_list)
+
+
+def dijkstra_shortest_path(adjacency_list_weighted, start, end):
+    visited = set()
+    predecessors = {}
+    dist = {}
+    path = deque()
+    for key in adjacency_list_weighted.keys():
+        dist[key] = sys.maxsize
+    dist[start] = 0
+    prio_queue = PriorityQueue()
+    prio_queue.put((0, start))
+    while not prio_queue.empty():
+        min_val, current = prio_queue.get()
+        visited.add(current)
+        if dist[current] < min_val: continue
+        for neighbor in adjacency_list_weighted[current]:
+            if neighbor in visited or neighbor in border_set or neighbor in barrier_set: continue
+            new_dist = min_val + adjacency_list_weighted[current][neighbor]
+            if new_dist < dist[neighbor]:
+                predecessors[neighbor] = current
+                dist[neighbor] = new_dist
+                prio_queue.put((dist[neighbor], neighbor))
+        if current != start and current != end :
+            canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="orange")
+            time.sleep(0.01)
+            canvas.update()
+        if current == end:
+            while current in predecessors:
+                current = predecessors[current]
+                if current != end and current != start:
+                    path.appendleft(current)
+                if current == start:
+                    break
+            for current in path:
+                canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="yellow")
+                time.sleep(0.01)
+                canvas.update()
+            return
 
 
 canvas.bind("<B1-Motion>", draw_barrier)
