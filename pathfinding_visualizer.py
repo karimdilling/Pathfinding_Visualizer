@@ -21,7 +21,7 @@ canvas = tk.Canvas(root, bg="white", width=CANVAS_WIDTH, height=CANVAS_HEIGHT)
 canvas.pack(side=tk.TOP)
 
 # Put buttons in place
-options = ["Breadth-First-Pathfinding", "Depth-First-Pathfinding", "Dijkstra-Pathfinding"]
+options = ["Breadth-First-Pathfinding", "Depth-First-Pathfinding", "Dijkstra-Pathfinding", "A*-Pathfinding"]
 variable = tk.StringVar()
 variable.set(options[0])
 choose_algorithm_menu = tk.OptionMenu(root, variable, *options)
@@ -35,6 +35,8 @@ def get_algorithm():
         depth_first_algorithm(adjacency_list, start, end)
     elif variable.get() == options[2]:
         dijkstra_shortest_path(adjacency_list_weighted, start, end)
+    elif variable.get() == options[3]:
+        a_star_shortest_path(adjacency_list_weighted, start, end)
 
 start_algorithm_btn = tk.Button(root, text="Start Algorithm", command=get_algorithm)
 start_algorithm_btn.pack(side=tk.LEFT, padx=10)
@@ -242,11 +244,9 @@ def create_weighted_adjacency_list(adjacency_list):
         adjacency_list_weighted[node] = dict()
         for neighbor in neighbors:
             adjacency_list_weighted[node][neighbor] = 1 # adjust node weight here
-    print(adjacency_list_weighted)
     return adjacency_list_weighted
 
 adjacency_list_weighted = create_weighted_adjacency_list(adjacency_list)
-
 
 def dijkstra_shortest_path(adjacency_list_weighted, start, end):
     visited = set()
@@ -285,6 +285,63 @@ def dijkstra_shortest_path(adjacency_list_weighted, start, end):
                 time.sleep(0.01)
                 canvas.update()
             return
+
+
+# Finds shortest path the quickest way in a weighted graph using a heuristic
+# function to make essentially educated guesses about the distance between
+# the current node and the end node
+def a_star_shortest_path(adjacency_list_weighted, start, end):
+    open_set = PriorityQueue()  # set of discovered nodes that may need to be reexpanded
+    open_set.put((0, start))
+    predecessors = {}
+    visited = set()
+    visited.add(start)
+    path = deque()
+    g_score = {}    # g_score[n] stores the cost of the cheapest path from start to node n currently known ("dist" in Dijkstra's algorithm)
+    f_score = {}    # f_score[n] = g_score[n] + heuristics[n], heuristics is the educated guess about the distance (here the Manhattan Distance is used for that)
+    for key in adjacency_list_weighted.keys():
+        g_score[key] = sys.maxsize  # initializes every node with a max value due to the distance/weight currently unknown (like in Dijkstra's algorithm)
+        f_score[key] = sys.maxsize
+    g_score[start] = 0
+    f_score[start] = heuristics(start, end)
+    while not open_set.empty():
+        min_val, current = open_set.get()
+        visited.remove(current)
+        if current == end:
+            while current in predecessors:
+                current = predecessors[current]
+                if current != end and current != start:
+                    path.appendleft(current)
+                if current == start:
+                    break
+            for current in path:
+                canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="yellow")
+                time.sleep(0.01)
+                canvas.update()
+            return
+        for neighbor in adjacency_list_weighted[current]:
+            # d(current, neighbor) is the weight of the edge from current to neighbor
+            # temp_g_score is the distance from start to the neighbor through current
+            if neighbor in visited or neighbor in border_set or neighbor in barrier_set: continue
+            temp_g_score = g_score[current] + 1 # d(current, neighbor) = 1 here
+            if temp_g_score < g_score[neighbor]:
+                # The path here is better than any previous one, so it gets tracked
+                predecessors[neighbor] = current
+                g_score[neighbor] = temp_g_score
+                f_score[neighbor] = g_score[neighbor] + heuristics(neighbor, end)
+                if neighbor not in visited:
+                    open_set.put((f_score[neighbor], neighbor))
+                    visited.add(neighbor)
+        if current != start and current != end:
+            canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="orange")
+            time.sleep(0.01)
+            canvas.update()
+    return
+
+# Heuristics function used for the A* pathfinding algorithm
+# Here the Manhattan Distance is used
+def heuristics(start, end):
+    return abs(start[0] - end[0]) + abs(start[1] - end[1])
 
 
 canvas.bind("<B1-Motion>", draw_barrier)
