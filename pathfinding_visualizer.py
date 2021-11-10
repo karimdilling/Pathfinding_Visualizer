@@ -41,10 +41,20 @@ def get_algorithm():
 start_algorithm_btn = tk.Button(root, text="Start Algorithm", command=get_algorithm)
 start_algorithm_btn.pack(side=tk.LEFT, padx=10)
 
-# Create start and end point
-canvas.create_rectangle(start[0], start[1], start[0] + TILE_SIZE, start[1] + TILE_SIZE, fill="green")
-canvas.create_rectangle(end[0], end[1], end[0] + TILE_SIZE, end[1] + TILE_SIZE, fill="red")
+clear_board_btn = tk.Button(root, text="Clear Board", command=lambda: [canvas.delete("all"), canvas.update(), create_start_and_end_tile(), draw_grid(), draw_border(), reset_barrier()])
+clear_board_btn.pack(side=tk.LEFT, padx=10)
 
+# Create start and end point
+def create_start_and_end_tile():
+    canvas.create_rectangle(start[0], start[1], start[0] + TILE_SIZE, start[1] + TILE_SIZE, fill="green")
+    canvas.create_rectangle(end[0], end[1], end[0] + TILE_SIZE, end[1] + TILE_SIZE, fill="red")
+
+create_start_and_end_tile()
+
+# Reset barrier/border
+def reset_barrier():
+    global barrier_set
+    barrier_set = set()
 
 barrier_set = set()
 
