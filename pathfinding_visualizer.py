@@ -304,8 +304,6 @@ def a_star_shortest_path(adjacency_list_weighted, start, end):
     open_set = PriorityQueue()  # set of discovered nodes that may need to be reexpanded
     open_set.put((0, start))
     predecessors = {}
-    visited = set()
-    visited.add(start)
     path = deque()
     g_score = {}    # g_score[n] stores the cost of the cheapest path from start to node n currently known ("dist" in Dijkstra's algorithm)
     f_score = {}    # f_score[n] = g_score[n] + heuristics[n], heuristics is the educated guess about the distance (here the Manhattan Distance is used for that)
@@ -316,7 +314,6 @@ def a_star_shortest_path(adjacency_list_weighted, start, end):
     f_score[start] = heuristics(start, end)
     while not open_set.empty():
         min_val, current = open_set.get()
-        visited.remove(current)
         if current == end:
             while current in predecessors:
                 current = predecessors[current]
@@ -332,16 +329,15 @@ def a_star_shortest_path(adjacency_list_weighted, start, end):
         for neighbor in adjacency_list_weighted[current]:
             # d(current, neighbor) is the weight of the edge from current to neighbor
             # temp_g_score is the distance from start to the neighbor through current
-            if neighbor in visited or neighbor in border_set or neighbor in barrier_set: continue
+            if neighbor in open_set.queue or neighbor in border_set or neighbor in barrier_set: continue
             temp_g_score = g_score[current] + 1 # d(current, neighbor) = 1 here
             if temp_g_score < g_score[neighbor]:
                 # The path here is better than any previous one, so it gets tracked
                 predecessors[neighbor] = current
                 g_score[neighbor] = temp_g_score
                 f_score[neighbor] = g_score[neighbor] + heuristics(neighbor, end)
-                if neighbor not in visited:
+                if neighbor not in open_set.queue:
                     open_set.put((f_score[neighbor], neighbor))
-                    visited.add(neighbor)
         if current != start and current != end:
             canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="orange")
             time.sleep(0.01)
