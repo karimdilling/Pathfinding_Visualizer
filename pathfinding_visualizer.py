@@ -78,7 +78,6 @@ def remove_barrier(e):
     if (x, y) in barrier_set:
         barrier_set.remove((x, y))
         canvas.create_rectangle(x, y, x+TILE_SIZE, y+TILE_SIZE, fill="white")
-        # print(barrier_set)
 
 
 def is_inbounds(x, y):
@@ -146,15 +145,6 @@ def draw_border():
 
 draw_border()
 
-def draw_start_end():
-    canvas.create_rectangle(5*TILE_SIZE, 5*TILE_SIZE, 5*TILE_SIZE+TILE_SIZE, 5*TILE_SIZE+TILE_SIZE, fill="green")   # Start point
-    canvas.create_rectangle(35*TILE_SIZE, 15*TILE_SIZE, 35*TILE_SIZE+TILE_SIZE, 15*TILE_SIZE+TILE_SIZE, fill="red") # End point
-
-def draw_spots():
-    canvas.create_rectangle(grid[3][2].x, grid[3][2].y, grid[3][2].x+TILE_SIZE, grid[3][2].y+TILE_SIZE, fill="blue")
-    for neighbor in grid[3][2].neighbors:
-        canvas.create_rectangle(neighbor.x, neighbor.y, neighbor.x+TILE_SIZE, neighbor.y+TILE_SIZE, fill="yellow")
-
 
 def draw_grid():
     for y in range(0, CANVAS_HEIGHT, TILE_SIZE):
@@ -163,9 +153,16 @@ def draw_grid():
         canvas.create_line(x, 0, x, CANVAS_HEIGHT)
             
 
-# draw_start_end()
-# draw_spots()
 draw_grid()
+
+
+# Fills out the specified tile if it's not the start or end point
+def draw_spot(start, end, current):
+    if current != start and current != end:
+        canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="orange")
+        time.sleep(0.01)
+        canvas.update()
+
 
 # Create adjacency list that can be used by pathfinding algorithms
 def get_adjacency_list(grid):
@@ -184,67 +181,57 @@ adjacency_list = get_adjacency_list(grid)
 #     print(str(node) + " : " + str(neighbors))
 
 
+def reconstruct_path(start, end, predecessors, current):
+    path = deque()
+    while current in predecessors:
+        current = predecessors[current]
+        if current != end and current != start:
+            path.appendleft(current)
+        if current == start:
+            break
+    for current in path:
+        canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="yellow")
+        time.sleep(0.01)
+        canvas.update()
+
+
 def breadth_first_shortest_path(adjacency_list, start, end):
     visited = set([start])
     queue = deque([[start]])
     predecessors = {}
-    path = deque()
     canvas.create_rectangle(start[0], start[1], start[0] + TILE_SIZE, start[1] + TILE_SIZE, fill="green")
     canvas.create_rectangle(end[0], end[1], end[0] + TILE_SIZE, end[1] + TILE_SIZE, fill="red")
     while len(queue) > 0:
         [node] = queue.popleft()
         if node == end:
-            while node in predecessors:
-                node = predecessors[node]
-                if node != end and node != start:
-                    path.appendleft(node)
-                if node == start:
-                    break
-            for node in path:
-                canvas.create_rectangle(node[0], node[1], node[0] + TILE_SIZE, node[1] + TILE_SIZE, fill="yellow")
-                time.sleep(0.01)
-                canvas.update()
+            reconstruct_path(start, end , predecessors, node)
             return
         for neighbor in adjacency_list[node]:
             if neighbor not in visited and neighbor not in barrier_set and neighbor not in border_set:
                 predecessors[neighbor] = node
                 visited.add(neighbor)
                 queue.append([neighbor])
-        if node != start:
-            canvas.create_rectangle(node[0], node[1], node[0] + TILE_SIZE, node[1] + TILE_SIZE, fill="orange")
-            time.sleep(0.01)
-            canvas.update()
+        draw_spot(start, end, node)
+    return
 
 
 def depth_first_algorithm(adjacency_list, start, end):
     visited = set()
     stack = [start]
     predecessors = {}
-    path = deque()
     while len(stack) > 0:
         current = stack.pop()
         if current != start:
             visited.add(current)
         if current == end: 
-            while current in predecessors:
-                current = predecessors[current]
-                if current != end and current != start:
-                    path.appendleft(current)
-                if current == start:
-                    break
-            for current in path:
-                canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="yellow")
-                time.sleep(0.01)
-                canvas.update()
+            reconstruct_path(start, end, predecessors, current)
             return
-        if current != start:
-            canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="orange")
-            time.sleep(0.01)
-            canvas.update()
+        draw_spot(start, end, current)
         for neighbor in adjacency_list[current]:
             if neighbor not in visited and neighbor not in barrier_set and neighbor not in border_set:
                 predecessors[neighbor] = current
                 stack.append(neighbor)
+    return
 
 
 # Creates weighted adjacency list for Dijkstra and A* algorithm (weighted pathfinding algorithms)
@@ -256,13 +243,14 @@ def create_weighted_adjacency_list(adjacency_list):
             adjacency_list_weighted[node][neighbor] = 1 # adjust node weight here
     return adjacency_list_weighted
 
+
 adjacency_list_weighted = create_weighted_adjacency_list(adjacency_list)
+
 
 def dijkstra_shortest_path(adjacency_list_weighted, start, end):
     visited = set()
     predecessors = {}
     dist = {}
-    path = deque()
     for key in adjacency_list_weighted.keys():
         dist[key] = sys.maxsize
     dist[start] = 0
@@ -279,22 +267,11 @@ def dijkstra_shortest_path(adjacency_list_weighted, start, end):
                 predecessors[neighbor] = current
                 dist[neighbor] = new_dist
                 prio_queue.put((dist[neighbor], neighbor))
-        if current != start and current != end :
-            canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="orange")
-            time.sleep(0.01)
-            canvas.update()
+        draw_spot(start, end, current)
         if current == end:
-            while current in predecessors:
-                current = predecessors[current]
-                if current != end and current != start:
-                    path.appendleft(current)
-                if current == start:
-                    break
-            for current in path:
-                canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="yellow")
-                time.sleep(0.01)
-                canvas.update()
+            reconstruct_path(start, end, predecessors, current)
             return
+    return
 
 
 # Finds shortest path the quickest way in a weighted graph using a heuristic
@@ -304,7 +281,6 @@ def a_star_shortest_path(adjacency_list_weighted, start, end):
     open_set = PriorityQueue()  # set of discovered nodes that may need to be reexpanded
     open_set.put((0, start))
     predecessors = {}
-    path = deque()
     g_score = {}    # g_score[n] stores the cost of the cheapest path from start to node n currently known ("dist" in Dijkstra's algorithm)
     f_score = {}    # f_score[n] = g_score[n] + heuristics[n], heuristics is the educated guess about the distance (here the Manhattan Distance is used for that)
     for key in adjacency_list_weighted.keys():
@@ -315,16 +291,7 @@ def a_star_shortest_path(adjacency_list_weighted, start, end):
     while not open_set.empty():
         min_val, current = open_set.get()
         if current == end:
-            while current in predecessors:
-                current = predecessors[current]
-                if current != end and current != start:
-                    path.appendleft(current)
-                if current == start:
-                    break
-            for current in path:
-                canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="yellow")
-                time.sleep(0.01)
-                canvas.update()
+            reconstruct_path(start, end, predecessors, current)
             return
         for neighbor in adjacency_list_weighted[current]:
             # d(current, neighbor) is the weight of the edge from current to neighbor
@@ -338,11 +305,9 @@ def a_star_shortest_path(adjacency_list_weighted, start, end):
                 f_score[neighbor] = g_score[neighbor] + heuristics(neighbor, end)
                 if neighbor not in open_set.queue:
                     open_set.put((f_score[neighbor], neighbor))
-        if current != start and current != end:
-            canvas.create_rectangle(current[0], current[1], current[0] + TILE_SIZE, current[1] + TILE_SIZE, fill="orange")
-            time.sleep(0.01)
-            canvas.update()
+        draw_spot(start, end, current)
     return
+
 
 # Heuristics function used for the A* pathfinding algorithm
 # Here the Manhattan Distance is used
