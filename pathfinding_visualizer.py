@@ -41,6 +41,9 @@ def get_algorithm():
 start_algorithm_btn = tk.Button(root, text="Start Algorithm", command=get_algorithm)
 start_algorithm_btn.pack(side=tk.LEFT, padx=10)
 
+clear_graph_btn = tk.Button(root, text="Clear Graph", command=lambda: [canvas.delete("all"), canvas.update(), create_start_and_end_tile(), draw_grid(), draw_border(), redraw_all_barriers()])
+clear_graph_btn.pack(side=tk.LEFT, padx=10)
+
 clear_board_btn = tk.Button(root, text="Clear Board", command=lambda: [canvas.delete("all"), canvas.update(), create_start_and_end_tile(), draw_grid(), draw_border(), reset_barrier()])
 clear_board_btn.pack(side=tk.LEFT, padx=10)
 
@@ -67,7 +70,12 @@ def draw_barrier(e):
     if (x, y) not in barrier_set:
         barrier_set.add((x, y))
         canvas.create_rectangle(x, y, x+TILE_SIZE, y+TILE_SIZE, fill="black")
-        # print(barrier_set)
+
+
+def redraw_all_barriers():
+    for barrier in barrier_set:
+        canvas.create_rectangle(barrier[0], barrier[1], barrier[0] + TILE_SIZE, barrier[1] + TILE_SIZE, fill="black")
+
 
 def remove_barrier(e):
     x = e.x
