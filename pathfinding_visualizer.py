@@ -320,7 +320,7 @@ def a_star_shortest_path(adjacency_list_weighted, start, end):
 # Heuristics function used for the A* pathfinding algorithm
 # Here the Manhattan Distance is used
 def heuristics(start, end):
-    return abs(start[0] - end[0]) + abs(start[1] - end[1])
+    return abs(start[0]//TILE_SIZE - end[0]//TILE_SIZE) + abs(start[1]//TILE_SIZE - end[1]//TILE_SIZE)
 
 
 canvas.bind("<B1-Motion>", draw_barrier)
