@@ -207,10 +207,9 @@ def breadth_first_shortest_path(adjacency_list, start, end):
     visited = set([start])
     queue = deque([[start]])
     predecessors = {}
-    canvas.create_rectangle(start[0], start[1], start[0] + TILE_SIZE, start[1] + TILE_SIZE, fill="green")
-    canvas.create_rectangle(end[0], end[1], end[0] + TILE_SIZE, end[1] + TILE_SIZE, fill="red")
     while len(queue) > 0:
         [node] = queue.popleft()
+        draw_spot(start, end, node)
         if node == end:
             reconstruct_path(start, end , predecessors, node)
             return
@@ -219,7 +218,6 @@ def breadth_first_shortest_path(adjacency_list, start, end):
                 predecessors[neighbor] = node
                 visited.add(neighbor)
                 queue.append([neighbor])
-        draw_spot(start, end, node)
     return
 
 
