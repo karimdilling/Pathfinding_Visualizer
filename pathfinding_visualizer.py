@@ -38,6 +38,30 @@ def get_algorithm():
     elif variable.get() == options[3]:
         a_star_shortest_path(adjacency_list_weighted, start, end)
 
+
+click_count = 0
+def adjust_start_end(event):
+    global click_count, start, end
+    click_count += 1
+    if click_count == 1:
+        canvas.create_rectangle(start[0], start[1], start[0] + TILE_SIZE, start[1] + TILE_SIZE, fill="white")
+        start = (event.x // TILE_SIZE * TILE_SIZE, event.y // TILE_SIZE * TILE_SIZE)
+        canvas.create_rectangle(start[0], start[1], start[0] + TILE_SIZE, start[1] + TILE_SIZE, fill="green")
+        canvas.unbind("<B1-Motion>")
+    elif click_count == 2:
+        canvas.create_rectangle(end[0], end[1], end[0] + TILE_SIZE, end[1] + TILE_SIZE, fill="white")
+        end = (event.x // TILE_SIZE * TILE_SIZE, event.y // TILE_SIZE * TILE_SIZE)
+        canvas.create_rectangle(end[0], end[1], end[0] + TILE_SIZE, end[1] + TILE_SIZE, fill="red")
+        click_count = 0
+        canvas.unbind("<Button-1>")
+        canvas.after(200, lambda: [canvas.bind("<B1-Motion>", draw_barrier), canvas.bind("<Button-1>", draw_barrier)])
+
+
+def erase_start_end():
+    canvas.create_rectangle(start[0], start[1], start[0] + TILE_SIZE, start[1] + TILE_SIZE, fill="white")
+    canvas.create_rectangle(end[0], end[1], end[0] + TILE_SIZE, end[1] + TILE_SIZE, fill="white")
+
+
 start_algorithm_btn = tk.Button(root, text="Start Algorithm", command=get_algorithm)
 start_algorithm_btn.pack(side=tk.LEFT, padx=10)
 
@@ -46,6 +70,9 @@ clear_graph_btn.pack(side=tk.LEFT, padx=10)
 
 clear_board_btn = tk.Button(root, text="Clear Board", command=lambda: [canvas.delete("all"), canvas.update(), create_start_and_end_tile(), draw_grid(), draw_border(), reset_barrier()])
 clear_board_btn.pack(side=tk.LEFT, padx=10)
+
+set_start_end_btn = tk.Button(root, text="Set New Start & End", command=lambda: [canvas.bind("<Button-1>", adjust_start_end), erase_start_end()])
+set_start_end_btn.pack(side=tk.LEFT, padx=10)
 
 # Create start and end point
 def create_start_and_end_tile():
