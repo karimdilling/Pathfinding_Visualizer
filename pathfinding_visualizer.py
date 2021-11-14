@@ -3,6 +3,7 @@ import time
 import sys
 from collections import deque
 from queue import PriorityQueue
+from tkinter import messagebox
 
 
 # Setup window
@@ -73,6 +74,12 @@ clear_board_btn.pack(side=tk.LEFT, padx=10)
 
 set_start_end_btn = tk.Button(root, text="Set New Start & End", command=lambda: [canvas.bind("<Button-1>", adjust_start_end), erase_start_end()])
 set_start_end_btn.pack(side=tk.LEFT, padx=10)
+
+
+# Message that is shown when the target node is blocked off with barriers
+def show_message():
+    messagebox.showinfo("Not reachable", "Target could not be reached. You probably blocked it off with barriers.")
+
 
 # Create start and end point
 def create_start_and_end_tile():
@@ -245,6 +252,7 @@ def breadth_first_shortest_path(adjacency_list, start, end):
                 predecessors[neighbor] = node
                 visited.add(neighbor)
                 queue.append([neighbor])
+    show_message()
     return
 
 
@@ -264,6 +272,7 @@ def depth_first_algorithm(adjacency_list, start, end):
             if neighbor not in visited and neighbor not in barrier_set and neighbor not in border_set:
                 predecessors[neighbor] = current
                 stack.append(neighbor)
+    show_message()
     return
 
 
@@ -304,6 +313,7 @@ def dijkstra_shortest_path(adjacency_list_weighted, start, end):
         if current == end:
             reconstruct_path(start, end, predecessors, current)
             return
+    show_message()
     return
 
 
@@ -339,6 +349,7 @@ def a_star_shortest_path(adjacency_list_weighted, start, end):
                 if neighbor not in open_set.queue:
                     open_set.put((f_score[neighbor], neighbor))
         draw_spot(start, end, current)
+    show_message()
     return
 
 
